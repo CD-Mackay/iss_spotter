@@ -12,18 +12,17 @@ const fetchMyIP = function(callback) {
       const msg = `Status Code ${response.statuscode} when fetching IP. Response: ${body}`;
       callback(Error(msg), null);
     } else {
-      let data = JSON.parse(body);
-      callback(null, data.ip);
+      const ip = JSON.parse(body).ip;
+      callback(null, ip);
     }
   });
 };
 
 ///// Fetch Coordinate by IP function, not working
 
-let ip = "135.23.139.34";
 const fetchCoordByIp = function(ip, callback) {
-  let results = {};
-  let url = `https://freegeoip.app/json/135.23.139.34`;
+  const results = {};
+  let url = `https://freegeoip.app/json/${ip}`;
   request(url, (error, response, body) => {
     if (error) {
       callback(error, null);
@@ -45,14 +44,46 @@ const fetchCoordByIp = function(ip, callback) {
 
 // Find passes function
 const fetchISSFlyOverTimes = function (results, callback) {
-  request("http://api.open-notify.org/iss-pass.json?lat=LAT&lon=LON", (error, response, body) => {
-    let data = JSON.parse(body);
-    console.log(data);
+  request(`http://api.open-notify.org/iss-pass.json?lat=${results.latitude}&lon=${results.longitude}`, (error, response, body) => {
+    if (error) {
+      callback(error, null);
+      return;
+    }
+    if (response.statusCode !== 200) {
+      callback(Error(`Status Code ${response.statusCode} when fetching ISS pass times`));
+      return;
+    }
+  let data = JSON.parse(body).response;
+    callback(null, data);
     
   })
+};
+
+
+
+const nextISSTimesForMyLocation = function(callback) {
+  fetchMyIP((error, ip) => {
+    if (error) {
+      return callback(error, null);
+    }
+
+    fetchCoordByIp(ip, (error, location) => {
+      if (error) {
+        callback(error, null);
+
+      }
+      fetchISSFlyOverTimes(location, (error, nextPasses) => {
+        if (error) {
+          return callback(error, null);
+        }
+        callback(null, nextPasses);
+      })
+    })
+  })
+
 }
 
-module.exports = { fetchMyIP, fetchCoordByIp, fetchISSFlyOverTimes };
+module.exports = { nextISSTimesForMyLocation };
 
 
 
