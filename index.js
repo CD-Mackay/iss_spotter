@@ -1,8 +1,9 @@
-//Makes a single API request to retrieve user's IP address.
-//Input: a callback (passed either error or IP string)
-//returns, via callback, error if any or IP address as a string
-const fetchMyIP = function(callback) {
+const { fetchMyIP } = require('./iss');
 
-}
-
-module.exports = { fetchMyIP };
+fetchMyIP((error, ip) => {
+  if (error) {
+    console.log("It didn't work!", error);
+    return;
+  }
+  console.log("It worked! Return IP: ", ip);
+});
